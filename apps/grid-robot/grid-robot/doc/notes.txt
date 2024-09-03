@@ -1,0 +1,55 @@
+Kraken API:
+    - GetClosedOrders > determine if an order was filled or not
+    - GetTradeBalance > get profits and losses
+    - AddOrder > place market and limit orders
+    - CancelOrder > cancel open order
+    - Get System Status > can check system availability
+    - GetTickerInformation > get current price?
+
+CURRENT
+    BUY 100
+    SELL 106
+NEXT
+    BUY 98
+    SELL 104
+NEXT NEXT 
+    BUY 96
+    SELL 102
+
+
+
+main()
+    
+
+
+loop()
+    sleep(30)
+    if isBuyStopOrderFilled(CURRENT)
+        if isSellStopOrderFilled(CURRENT)
+            moveNextInGrid()
+        else if isSellStopOrderOpen(CURRENT)
+            checkGridBoundary()
+        else
+            reEstablishBuySell()
+    else if isBuyStopOrderOpen(CURRENT)
+        checkGridBoundary()
+    else
+        reEstablishBuySell()
+        
+reEstablishBuySell()
+    if not isBuyStopOrderPlaced(CURRENT)
+        if not isSellStopOrderPlaced(CURRENT)
+            placeStopLoss(CURRENT)
+            placeBuyStopOrder(CURRENT)
+            placeSellStopOrder(CURRENT)
+        else
+            cancelSellStopOrder(CURRENT)
+
+is__OrderPlaced()
+    if cancelled, returns TRUE
+
+is__OrderOpen()
+    if the order is OPEN only, return TRUE
+
+is__OrderFilled()
+    if the order is FILLED only, return TRUE

@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: elasticstack
+  labels:
+    app: kibana
+  name: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: kibana:7.13.1
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch:9200"
+          resources:
+            limits:
+              memory: 750Mi
+              cpu: 500m
+            requests:
+              cpu: 150m
+              memory: 150Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: elasticstack
+  name: kibana
+spec:
+  type: ClusterIP
+  selector:
+    app: kibana
+  ports:
+    - name: http
+      port: 5601
+      protocol: TCP
+      targetPort: 5601
+  selector:
+    app: kibana

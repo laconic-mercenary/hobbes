@@ -1,0 +1,39 @@
+
+data:
+  span: -200
+price:
+  min: 5.0
+budget: 1000
+rsi:
+  span: 14
+sma:
+  deviation_span: 21
+  acceptable_deviation_divergence: 0.70
+ema:
+  span:
+    - 5
+    - 25
+  crosses:
+    buy:
+      days_ago: 1
+    sell:
+      days_ago: 1
+macd:
+  span:
+    slow: 26
+    fast: 12
+    sign: 9
+mfi:
+  span: 14
+adx_di:
+  span: 14
+  adx_trend_demarcation: 18.00
+ult:
+  span:
+    short: 5
+    middle: 10
+    long: 25
+  weight:
+    short: 4.0
+    middle: 2.0
+    long: 1.0

@@ -1,0 +1,47 @@
+version: "3"
+services:
+  clientportal:
+    build: 
+      context: ./ibkr-clientportal
+      dockerfile: Dockerfile
+  proxy:
+    build:
+      context: ./ibkr-clientportal/proxy
+      dockerfile: Dockerfile
+    ports: 
+      - "35080:80"
+  gateway:
+    image: localhost:5000/ibkr-gateway:latest
+    ports: 
+      - "35081:8080"
+    environment:
+      exec_timeout: 30s
+      read_timeout: 30s
+      write_timeout: 30s
+      upstream_timeout: 30s
+      IBKR_API_URL: "http://proxy:80"
+      MY_ACCOUNT_INDEX: 0
+      MAX_PREEXPIRY_TIME: 360000
+  gateway-ui:
+    build:
+      context: ./ibkr-gateway/tools/openapi
+      dockerfile: Dockerfile
+    ports: 
+      - "35082:8080"
+  session:
+    build:
+      context: ./ibkr-session/refresh
+      dockerfile: ../Dockerfile
+    command: 
+      - "/bin/sh"
+      - "/tmp/repeat.sh"
+    environment:
+      IBKR_GATEWAY_TARGET: "http://gateway:8080/function/ibkr-gateway?type=auth-check"
+  # tester:
+  #   build: 
+  #     context: ./ibkr-gateway/testing
+  #     dockerfile: Dockerfile
+  #   environment: 
+  #     IBKR_GATEWAY_MARKET_TARGET: "http://gateway:8080/function/ibkr-gateway?type=market-data"
+  #     IBKR_GATEWAY_AUTH_TARGET: "http://gateway:8080/function/ibkr-gateway?type=auth-check"
+  #     PYTHONUNBUFFERED: 1

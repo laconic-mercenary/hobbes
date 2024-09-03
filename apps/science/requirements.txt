@@ -1,0 +1,7 @@
+numpy
+matplotlib
+requests
+requests_html
+pandas
+ta
+PyYAML

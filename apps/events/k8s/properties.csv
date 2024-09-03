@@ -1,0 +1,3 @@
+name,type,class,capacity,mode,path,environment
+bitwarden.sample,local,manual,800Mi,ReadWriteOnce,'/mnt/sample/bitwarden', sample
+bitwarden.pre,local,manual,1000Mi,ReadWriteOnce,'/mnt/pre/bitwarden', pre

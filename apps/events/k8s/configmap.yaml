@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: "hobbes"
+  name: "events"
+data:
+  hobbes.channel.endpoint: "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/hobbes/hobbes"

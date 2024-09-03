@@ -1,0 +1,68 @@
+---
+apiVersion: v1
+data:
+  logstash.conf: "input {\n  beats {\n    port => \"5044\"\n  }\n}\n \noutput {\n
+    \ elasticsearch {\n    hosts => [\"http://elasticsearch:9200\"]\n    index =>
+    \"%{[@metadata][beat]}-%{[@metadata][version]}-%{+YYYY.MM.dd}\"\n  }\n  stdout
+    {\n    codec => rubydebug\n  }\n}"
+kind: ConfigMap
+metadata:
+  name: logstash-pipeline
+  namespace: elasticstack
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: logstash
+  namespace: elasticstack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: logstash
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: logstash
+    spec:
+      hostname: logstash
+      containers:
+        - name: logstash
+          image: logstash:7.13.1
+          command:
+            - logstash
+          ports:
+            - containerPort: 5044
+              name: filebeat
+          volumeMounts:
+            - name: logstash-pipeline
+              mountPath: "/usr/share/logstash/pipeline/"
+      volumes:
+        - name: logstash-pipeline
+          configMap:
+            name: logstash-pipeline
+            items:
+              - key: logstash.conf
+                path: logstash.conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: elasticstack
+  name: logstash
+spec:
+  type: ClusterIP
+  selector:
+    app: logstash
+  ports:
+    - name: http
+      port: 5044
+      protocol: TCP
+      targetPort: 5044
+  selector:
+    app: logstash

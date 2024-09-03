@@ -1,0 +1,127 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ea-config
+  namespace: elasticstack
+data:
+  config.yaml: |
+    es_host: elasticsearch.elasticstack.svc.cluster.local
+    es_port: 9200
+    es_password: "changeme"
+
+    rules_folder: /config/rules
+    scan_subdirectories: false
+
+    buffer_time:
+      minutes: 15
+      seconds: 30
+
+    writeback_index: elastalert_status
+    writeback_alias: elastalert_alerts
+    alert_time_limit:
+      days: 2
+
+    run_every:
+      minutes: 1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ea-rules
+  namespace: elasticstack
+data:
+  auth-refresh-failed.yaml: |
+    name: ibkr-session-auth-refresh-failed
+    type: spike
+    index: filebeat*
+    threshold_cur: 1
+    threshold_ref: 0
+    timeframe:
+      minutes: 5
+    spike_height: 1
+    spike_type: "up"
+    filter:
+      - query:
+          query_string:
+            query: "kubernetes.container.name: ibkr-session and message: Unauthorized"
+    alert:
+      - command
+    pipe_match_json : true
+    command: ["python", "/config/rules/rules-handler.py", "session_expired"]
+  
+  rules-handler.py: |
+    import sys
+    import json
+    import urllib2
+    import datetime
+
+    def http_post(url, data, headers):
+      req = urllib2.Request(url, data, headers)
+      response = urllib2.urlopen(req)
+      print(response.read())
+
+    def process_events(events_array, event_type):
+      if len(events_array) != 1:
+        raise Exception("Unexpected events list len {}".format(len(events_array)))
+      if event_type == "session_expired":
+        now = datetime.datetime.now()
+        print(">>> TIME:")
+        print(str(now))
+        print("SESSION_EXPIRED")
+      else:
+        raise Exception("Unknown event_type: {}".format(event_type))
+
+    def main():
+      for line in sys.stdin:
+        process_events(json.loads(line), sys.argv[1])
+
+    main()
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastalert
+  namespace: elasticstack
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: elastalert
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: elastalert
+    spec:
+      volumes:
+      - name: config-dir
+        configMap:
+          name: ea-config
+      - name: admin-config
+        emptyDir: {}
+      - name: user-rules-dir
+        configMap:
+          name: ea-rules
+      containers:
+      - image: bitsensor/elastalert:3.0.0-beta.1
+        imagePullPolicy: IfNotPresent
+        name: elastalert
+        volumeMounts:
+        - mountPath: /config
+          name: config-dir
+        - mountPath: /config/admin
+          name: admin-config
+        - mountPath: /config/rules
+          name: user-rules-dir
+        command:
+          - python
+          - -m
+          - elastalert.elastalert
+          - --config
+          - /config/config.yaml

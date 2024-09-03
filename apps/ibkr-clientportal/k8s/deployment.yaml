@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: "hobbes"
+  name: "ibkr-clientportal"
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: "RollingUpdate"
+  selector:
+    matchLabels:
+      app: "ibkr-clientportal"
+  template:
+    metadata:
+      labels:
+        app: "ibkr-clientportal"
+    spec:
+      imagePullSecrets:
+        - name: hobbes
+      containers:
+        - name: "ibkr-clientportal"
+          image: "localhost:5000/ibkr-clientportal:latest"
+          imagePullPolicy: "Always"
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 1500Mi
+            requests:
+              cpu: 250m
+              memory: 500Mi
+          ports:
+            - containerPort: 5001
+              name: http
+              protocol: TCP
+#          args:
+#            - -arg.config=$(CONFIG_NAME)
+#            - -arg.secret=$(SECRET_NAME)
+          env:
+            - name: CONFIG_EXAMPLE
+              valueFrom:
+                configMapKeyRef:
+                  key: example
+                  name: "ibkr-clientportal"
+            - name: SECRET_EXAMPLE
+              valueFrom:
+                secretKeyRef:
+                  key: example
+                  name: "ibkr-clientportal"

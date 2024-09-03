@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  namespace: hobbes
+  name: ibkr-session
+spec:
+  # every 5 min: "*/5 * * * *"
+  schedule: "*/5 * * * *"
+  # doesn't allow overlapping - Replace kills the running job 
+  concurrencyPolicy: Replace
+  startingDeadlineSeconds: 200
+  failedJobsHistoryLimit: 4
+  successfulJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: hobbes
+          restartPolicy: Never
+          # volumes:
+          #   - name: filebeat-hobbes-config
+          #     configMap:
+          #       name: filebeat-hobbes-config
+          #       items:
+          #         - key: filebeat.yml
+          #           path: filebeat.yml
+          #   - name: app-log-directory
+          #     emptyDir: {}
+          containers:
+            # - name: filebeat-hobbes
+            #   image: elastic/filebeat:7.13.1
+            #   imagePullPolicy: IfNotPresent
+            #   args: [ "-c", "/etc/filebeat/filebeat.yml", "-e" ]
+            #   volumeMounts:
+            #     - name: filebeat-hobbes-config
+            #       mountPath: /etc/filebeat/
+            #     - name: app-log-directory
+            #       mountPath: /tmp/
+            - name: ibkr-session
+              image: localhost:5000/ibkr-session:latest
+              imagePullPolicy: Always
+              resources:
+                limits:
+                  cpu: 750m
+                  memory: 500Mi
+                requests:
+                  cpu: 100m
+                  memory: 250Mi
+              env:
+                - name: IBKR_GATEWAY_TARGET
+                  valueFrom:
+                    configMapKeyRef:
+                      key: ibkr.gateway
+                      name: "ibkr-session"
+                - name: HTTP_CLIENT_TIMEOUT_MS
+                  valueFrom:
+                    configMapKeyRef:
+                      key: http.client.timeoutmills
+                      name: "ibkr-session"
+                - name: HTTP_SOCKET_TIMEOUT_MS
+                  valueFrom:
+                    configMapKeyRef:
+                      key: http.socket.timeoutmillis
+                      name: "ibkr-session"
+              # volumeMounts:
+              #   - name: filebeat-hobbes-config
+              #     mountPath: /etc/filebeat/
+              #   - name: app-log-directory
+              #     mountPath: /tmp/

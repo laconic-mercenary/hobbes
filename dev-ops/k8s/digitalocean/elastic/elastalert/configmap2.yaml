@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ea-rules
+  namespace: elasticstack
+data:
+  auth-refresh-failed.yaml: |
+    name: ibkr-session-auth-refresh-failed
+    type: spike
+    index: filebeat*
+    threshold_cur: 1
+    threshold_ref: 0
+    timeframe:
+      minutes: 5
+    spike_height: 1
+    spike_type: "up"
+    filter:
+      - query:
+          query_string:
+            query: "kubernetes.container.name: ibkr-session and message: Unauthorized"
+    alert:
+      - command
+    pipe_match_json : true
+    command: ["python", "/config/rules/rules-handler.py", "session_expired"]
+  buy-tickers.yaml: |
+    name: science-buy-tickers
+    type: spike
+    index: filebeat*
+    threshold_cur: 1
+    threshold_ref: 0
+    timeframe:
+      minutes: 15
+    spike_height: 1
+    spike_type: "up"
+    filter:
+      - query:
+          query_string:
+            query: "kubernetes.container.name: science* AND deviations_buy_tickers: *"
+    alert:
+      - command
+    pipe_match_json : true
+    command: ["python", "/config/rules/rules-handler.py", "buy_tickers"]
+  sell-tickers.yaml: |
+    name: science-sell-tickers
+    type: spike
+    index: filebeat*
+    threshold_cur: 1
+    threshold_ref: 0
+    timeframe:
+      minutes: 15
+    spike_height: 1
+    spike_type: "up"
+    filter:
+      - query:
+          query_string:
+            query: "kubernetes.container.name: science* AND deviations_sell_tickers: *"
+    alert:
+      - command
+    pipe_match_json : true
+    command: ["python", "/config/rules/rules-handler.py", "sell_tickers"]
+  rules-handler.py: |
+    import sys
+    import json
+    import urllib2
+
+    def http_post(url, data, headers):
+      req = urllib2.Request(url, data, headers)
+      response = urllib2.urlopen(req)
+      print(response.read())
+
+    def process_events(events_array, event_type):
+      if len(events_array) != 1:
+        raise Exception("Unexpected events list len {}".format(len(events_array)))
+      if event_type == "buy_tickers":
+        http_post("http://events.hobbes.svc.cluster.local/channel", json.dumps({"source":"elastalert", "event":"buy_tickers", "tickers" : events_array[0]["deviations_buy_tickers"]}), {'Content-Type': 'application/json'})
+      elif event_type == "sell_tickers":
+        http_post("http://events.hobbes.svc.cluster.local/channel", json.dumps({"source":"elastalert", "event":"sell_tickers", "tickers" : events_array[0]["deviations_sell_tickers"]}), {'Content-Type': 'application/json'})
+      elif event_type == "session_expired":
+        http_post("http://events.hobbes.svc.cluster.local/channel", json.dumps({"source":"elastalert", "event":"session", "status" : "expired"}), {'Content-Type': 'application/json'})
+      else:
+        raise Exception("Unknown event_type: {}".format(event_type))
+
+    def main():
+      for line in sys.stdin:
+        process_events(json.loads(line), sys.argv[1])
+
+    main()

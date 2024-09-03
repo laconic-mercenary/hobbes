@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: "hobbes"
+  name: "ibkr-session"
+data:
+  ibkr.gateway: "http://gateway.openfaas.svc.cluster.local:8080/function/ibkr-gateway?type=auth-check"
+  http.client.timeoutmills: "15000"
+  http.socket.timeoutmillis: "15000"

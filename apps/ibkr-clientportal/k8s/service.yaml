@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: "hobbes"
+  name: "ibkr-clientportal"
+spec:
+  ## change the following to ClusterIP when an API gateway can secure it properly
+  type: NodePort
+  selector:
+    app: "ibkr-clientportal"
+  ports:
+    - name: http
+      port: 5001
+      protocol: TCP
+      targetPort: 5001
+      nodePort: 31004
+  selector:
+    app: "ibkr-clientportal"

@@ -1,0 +1,22 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+  ibkr-gateway:
+    lang: golang-http
+    handler: ./ibkr-gateway
+    image: localhost:5000/ibkr-gateway:latest
+#    secrets:
+#      - hobbes
+    environment_file:
+      - env.yaml
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 50Mi
+    labels:
+      Git-Owner: eureka313
+    readonly_root_filesystem: true

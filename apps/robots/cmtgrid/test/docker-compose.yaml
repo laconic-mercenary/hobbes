@@ -1,0 +1,12 @@
+version: "3"
+services:
+  robot:
+    build: 
+      context: ../
+      dockerfile: Dockerfile
+    environment:
+      ROBOT_GRID_BASEPRICE: "113.00"
+      ROBOT_GRID_LEVELAMOUNT: "1.00"
+      ROBOT_FINANCIAL_ENGINE_MODULE: "test.engine"
+      ROBOT_FINANCIAL_ENGINE_CLASSNAME: "IBKRTest"
+      PYTHONUNBUFFERED: 1

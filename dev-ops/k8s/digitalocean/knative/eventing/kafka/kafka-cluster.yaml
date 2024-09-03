@@ -1,0 +1,61 @@
+### https://strimzi.io/docs/operators/latest/using.html
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: hobbes-kafka-cluster
+  namespace: kafka
+spec:
+  kafka:
+    version: 2.8.0
+    replicas: 1
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    # resources:
+    #   requests:
+    #     memory: 64Gi
+    #     cpu: "8"
+    #   limits:
+    #     memory: 64Gi
+    #     cpu: "12"
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      log.message.format.version: "2.8"
+      inter.broker.protocol.version: "2.8"
+    storage:
+      type: ephemeral
+  zookeeper:
+    replicas: 3
+    storage:
+      type: ephemeral
+  entityOperator:
+    topicOperator:
+      watchedNamespace: kafka
+      zookeeperSessionTimeoutSeconds: 15
+      # reconciliationIntervalSeconds: 60
+      # resources:
+      #   requests:
+      #     memory: 512Mi
+      #     cpu: "1"
+      #   limits:
+      #     memory: 512Mi
+      #     cpu: "1"
+    userOperator:
+      watchedNamespace: kafka
+      
+      # reconciliationIntervalSeconds: 60
+      # resources:
+      #   requests:
+      #     memory: 512Mi
+      #     cpu: "1"
+      #   limits:
+      #     memory: 512Mi
+      #     cpu: "1"

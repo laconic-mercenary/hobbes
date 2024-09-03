@@ -1,0 +1,13 @@
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: events-trigger
+  namespace: hobbes
+spec:
+  broker: hobbes
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: events
+      namespace: hobbes

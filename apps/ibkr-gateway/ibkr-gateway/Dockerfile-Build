@@ -1,0 +1,12 @@
+
+## NOTE: make sure this version is the same as the golang version image 
+## found in the OpenFaaS template for golang-http
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.15-alpine3.13 as build
+
+RUN mkdir ${GOPATH}/src/ibkr-gateway && \
+    apk add --update git=2.30.2-r0 && \
+    go get -u github.com/golang/dep/cmd/dep
+
+WORKDIR ${GOPATH}/src/ibkr-gateway
+
+ENTRYPOINT ["dep", "ensure", "-v"]

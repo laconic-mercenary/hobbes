@@ -1,0 +1,5 @@
+## this is the common namespace for all apps found in the ibkr apps
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hobbes
